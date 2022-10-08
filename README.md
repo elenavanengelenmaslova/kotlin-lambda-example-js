@@ -1,2 +1,2 @@
-# kotlin-lambda-graalvm
-Koltin GraalVM lambda full version
+# kotlin-lambda-example js
+Koltin JS Lambda example
