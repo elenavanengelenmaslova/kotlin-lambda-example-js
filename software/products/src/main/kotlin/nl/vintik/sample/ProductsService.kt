@@ -1,60 +1,64 @@
 package nl.vintik.sample
 
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
-import nl.vintik.sample.util.logger
+import externals.client_dynamodb.DynamoDB
+import externals.client_dynamodb.ScanCommandInput
+import kotlinx.coroutines.*
 import nl.vintik.sample.model.Product
-import nl.vintik.sample.model.Product.Companion.schema
-import software.amazon.awssdk.enhanced.dynamodb.DynamoDbEnhancedAsyncClient
-import software.amazon.awssdk.enhanced.dynamodb.model.ScanEnhancedRequest
-import software.amazon.awssdk.regions.Region
-import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
-import java.util.*
+import nl.vintik.sample.model.Product.Companion.TABLE_NAME
+import kotlin.js.Promise
 
 class ProductsService {
     suspend fun findAllProducts(): List<Product> {
-        val products = Collections.synchronizedList(mutableListOf<Product>())
-        val jobs = mutableListOf<Deferred<Void>>()
+        val products = mutableListOf<Product>()
+        val jobs = mutableListOf<Deferred<Promise<Unit>>>()
 
-        logger().info("Parallel scans set to : $parallelScanTotalSegments with page size $parallelScanPageSize")
+        console.log("Parallel scans set to : $parallelScanTotalSegments with page size $parallelScanPageSize")
 
         coroutineScope {
             for (segment in 0 until parallelScanTotalSegments) {
-                jobs.add(async(Dispatchers.IO) {
-                    productTable.scan(
-                        ScanEnhancedRequest.builder()
-                            .segment(segment)
-                            .totalSegments(parallelScanTotalSegments)
-                            .limit(parallelScanPageSize)
-                            .build()
-                    ).items().subscribe {
-                        products.add(it)
-                    }.get()
+                jobs.add(async(Dispatchers.Default) {
+                    val input = object : ScanCommandInput {
+                        // omitted
+                        override var TableName: String?
+                            get() = TABLE_NAME
+                            set(value) {}
+                    }
+                    input.Segment = segment
+                    input.TotalSegments = parallelScanTotalSegments
+                    input.Limit = parallelScanPageSize
+                    scan(input, products)
                 })
             }
         }
-        jobs.awaitAll()
+        Promise.all(jobs.awaitAll().toTypedArray()).await()
 
-        logger().info("number of Product: ${products.size}")
+        console.log("number of Product: ${products.size}")
         return products
     }
 
-    companion object {
-        private val dynamoDbAsyncClient = DynamoDbEnhancedAsyncClient.builder()
-            .dynamoDbClient(
-                DynamoDbAsyncClient.builder()
-                    .region(Region.EU_WEST_1)
-                    .build()
-            )
-            .build()
+    private fun scan(
+        input: ScanCommandInput,
+        products: MutableList<Product>
+    ): Promise<Unit> {
+        val result = dynamoDbClient.scan(input)
+        return result.then {
+            it.Items?.forEach { productData ->
+                products.add(
+                    Product(
+                        productData["id"] as String,
+                        productData["name"] as String,
+                        productData["price"] as Float
+                    )
+                )
+            }
 
-        private val productTable = dynamoDbAsyncClient.table(
-            Product.TABLE_NAME,
-            schema
-        )
+        }.catch {
+            console.log("Error: ${JSON.stringify(it)}")
+        }
+    }
+
+    companion object {
+        private val dynamoDbClient: DynamoDB = DynamoDB(mapOf("apiVersion" to "2012-08-10", "region" to "eu-west-1"))
 
         private const val parallelScanTotalSegments = 4
         private const val parallelScanPageSize = 25
