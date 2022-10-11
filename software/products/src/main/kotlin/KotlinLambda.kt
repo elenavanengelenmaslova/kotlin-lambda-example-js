@@ -1,4 +1,5 @@
-package nl.vintik.sample
+import nl.vintik.sample.ProductsController
+import nl.vintik.sample.ProductsService
 
 @JsExport
 fun handleRequest(

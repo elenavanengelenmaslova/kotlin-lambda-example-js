@@ -1,5 +1,6 @@
 package nl.vintik.sample
 
+import handleRequest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
