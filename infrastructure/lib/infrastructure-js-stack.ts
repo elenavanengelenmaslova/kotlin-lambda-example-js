@@ -15,10 +15,9 @@ export class InfrastructureJsStack extends Stack {
         super(scope, id, props);
 
         const productsTable = dynamodb.Table.fromTableArn(this, 'dynamoTable', Fn.importValue('Products-JS-ExampleTableArn'));
-        const lambdaJS = new lambda.Function(this, 'lambdaJSArm64', {
+        const lambdaJS = new lambda.Function(this, 'lambdaJS', {
             description: "Kotlin Lambda JS Example",
             runtime: lambda.Runtime.NODEJS_16_X,
-            architecture: lambda.Architecture.ARM_64,
             timeout: Duration.seconds(120),
             memorySize: 512,
             handler: 'kotlin-lambda-example-js-products.handleRequest',
