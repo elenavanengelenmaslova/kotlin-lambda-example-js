@@ -21,7 +21,7 @@ export class InfrastructureJsStack extends Stack {
             architecture: lambda.Architecture.ARM_64,
             timeout: Duration.seconds(120),
             memorySize: 512,
-            handler: 'kotlin-lambda-example-js-software-products.handleRequest',
+            handler: 'kotlin-lambda-example-js-products.handleRequest',
             code: lambda.Code.fromAsset(path.join(__dirname, '../../build/dist/function.zip')),
             environment: {
                 REGION: Stack.of(this).region,
