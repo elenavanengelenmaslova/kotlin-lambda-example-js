@@ -46,7 +46,7 @@ jobs:
 
   deploy-app:
     runs-on: ubuntu-latest
-    needs: [ build, deploy-table ]
+    needs: [ deploy-table ]
     strategy:
       matrix:
         config:
