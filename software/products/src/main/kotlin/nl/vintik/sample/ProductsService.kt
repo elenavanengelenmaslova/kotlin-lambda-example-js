@@ -10,27 +10,24 @@ import kotlin.js.Promise
 class ProductsService {
     suspend fun findAllProducts(): List<Product> {
         val products = mutableListOf<Product>()
-        val jobs = mutableListOf<Deferred<Promise<Unit>>>()
+        val jobs = mutableListOf<Promise<Unit>>()
 
         console.log("Parallel scans set to : $parallelScanTotalSegments with page size $parallelScanPageSize")
 
-        coroutineScope {
-            for (segment in 0 until parallelScanTotalSegments) {
-                jobs.add(async(Dispatchers.Default) {
-                    val input = object : ScanCommandInput {
-                        // omitted
-                        override var TableName: String?
-                            get() = TABLE_NAME
-                            set(value) {}
-                    }
-                    input.Segment = segment
-                    input.TotalSegments = parallelScanTotalSegments
-                    input.Limit = parallelScanPageSize
-                    scan(input, products)
-                })
+        for (segment in 0 until parallelScanTotalSegments) {
+            val input = object : ScanCommandInput {
+                // omitted
+                override var TableName: String?
+                    get() = TABLE_NAME
+                    set(value) {}
             }
+            input.Segment = segment
+            input.TotalSegments = parallelScanTotalSegments
+            input.Limit = parallelScanPageSize
+            jobs.add(scan(input, products))
+
         }
-        Promise.all(jobs.awaitAll().toTypedArray()).await()
+        Promise.all(jobs.toTypedArray()).await()
 
         console.log("number of Product: ${products.size}")
         return products
@@ -41,6 +38,7 @@ class ProductsService {
         products: MutableList<Product>
     ): Promise<Unit> {
         val result = dynamoDbClient.scan(input)
+        //TODO: needs pagination with LastEvaluatedKey
         return result.then {
             it.Items?.forEach { productData ->
                 products.add(
