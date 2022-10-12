@@ -9,15 +9,14 @@ class ProductsController(
     private val productsService: ProductsService
 ) {
 
-    fun execute(testMode: Boolean): List<Product>? {
+    fun execute(): List<Product>? {
         var result: List<Product>? = null
-        if (!testMode) {
-            val job = GlobalScope.launch(Dispatchers.Default) {
-                result = productsService.findAllProducts()
-            }
-            while (!job.isCompleted) {
-                //await
-            }
+
+        val job = GlobalScope.launch(Dispatchers.Default) {
+            result = productsService.findAllProducts()
+        }
+        while (result == null){
+            //await
         }
         return result
     }
