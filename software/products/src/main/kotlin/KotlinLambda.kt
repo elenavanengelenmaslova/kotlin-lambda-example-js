@@ -8,7 +8,6 @@ fun handleRequest(
     context: Any?,
     callback: (err: String?, result: List<Product>?) -> Unit
 ) {
-    val result = ProductsController(ProductsService()).execute(event == "unitTest")
-    console.log(result)
-    callback(null, result)
+    ProductsController(ProductsService()).execute(event == "unitTest", callback)
+    console.log("Completed")
 }

@@ -8,15 +8,11 @@ import nl.vintik.sample.model.Product
 class ProductsController(
     private val productsService: ProductsService
 ) {
-    fun execute(testMode: Boolean): List<Product>? {
-        var result: List<Product>? = null
+    fun execute(testMode: Boolean, callback: (err: String?, result: List<Product>?) -> Unit) {
         if (!testMode) {
             GlobalScope.launch(Dispatchers.Default) {
-                result = productsService.findAllProducts()
-            }
-            while (result == null) { /* await */
+                callback(null, productsService.findAllProducts())
             }
         }
-        return result
     }
 }
