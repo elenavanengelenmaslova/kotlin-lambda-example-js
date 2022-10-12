@@ -11,11 +11,10 @@ class ProductsController(
     fun execute(testMode: Boolean): List<Product>? {
         var result: List<Product>? = null
         if (!testMode) {
-            val job = GlobalScope.launch(Dispatchers.Default) {
+            GlobalScope.launch(Dispatchers.Default) {
                 result = productsService.findAllProducts()
             }
-            while (result == null) {
-                //await
+            while (result == null) { /* await */
             }
         }
         return result
