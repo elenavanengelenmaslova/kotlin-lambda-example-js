@@ -58,7 +58,7 @@ class ProductsService {
     companion object {
         private val dynamoDbClient: DynamoDB = DynamoDB(mapOf("apiVersion" to "2012-08-10", "region" to "eu-west-1"))
 
-        private const val parallelScanTotalSegments = 4
+        private const val parallelScanTotalSegments = 5
         private const val parallelScanPageSize = 25
 
     }
