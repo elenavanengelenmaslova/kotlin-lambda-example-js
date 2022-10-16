@@ -41,8 +41,9 @@ class ProductsService {
         //TODO: needs pagination with LastEvaluatedKey
         return result.then {
             it.Items?.forEach { productData ->
-                console.log(productData["price"].javaClass.kotlin.qualifiedName)
-                console.log(productData["price"])
+                console.log("About to create Product")
+//                console.log(productData["price"].javaClass.kotlin.qualifiedName)
+//                console.log(productData["price"])
                 products.add(
                     Product(
                         productData["id"] as String,
