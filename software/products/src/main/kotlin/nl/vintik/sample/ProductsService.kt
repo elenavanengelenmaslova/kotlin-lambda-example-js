@@ -2,7 +2,7 @@ package nl.vintik.sample
 
 import externals.client_dynamodb.DynamoDB
 import externals.client_dynamodb.ScanCommandInput
-import kotlinx.coroutines.*
+import kotlinx.coroutines.await
 import nl.vintik.sample.model.Product
 import nl.vintik.sample.model.Product.Companion.TABLE_NAME
 import kotlin.js.Promise
@@ -41,14 +41,11 @@ class ProductsService {
         //TODO: needs pagination with LastEvaluatedKey
         return result.then {
             it.Items?.forEach { productData ->
-                console.log("About to create Product")
-//                console.log(productData["price"].javaClass.kotlin.qualifiedName)
-//                console.log(productData["price"])
                 products.add(
                     Product(
-                        productData["id"] as String,
-                        productData["name"] as String,
-                        0.0F
+                        productData["id"].S as String,
+                        productData["name"].S as String,
+                        (productData["price"].N as String).toFloat()
                     )
                 )
             }
