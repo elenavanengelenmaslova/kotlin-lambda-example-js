@@ -7,7 +7,7 @@ import nl.vintik.sample.model.Product
 import nl.vintik.sample.model.Product.Companion.TABLE_NAME
 import kotlin.js.Promise
 
-class ProductsService {
+class ProductsService (private val dynamoDbClient: DynamoDB){
     suspend fun findAllProducts(): List<Product> {
         val products = mutableListOf<Product>()
         val jobs = mutableListOf<Promise<Unit>>()
@@ -56,8 +56,6 @@ class ProductsService {
     }
 
     companion object {
-        private val dynamoDbClient: DynamoDB = DynamoDB(mapOf("apiVersion" to "2012-08-10", "region" to "eu-west-1"))
-
         private const val parallelScanTotalSegments = 5
         private const val parallelScanPageSize = 25
 
