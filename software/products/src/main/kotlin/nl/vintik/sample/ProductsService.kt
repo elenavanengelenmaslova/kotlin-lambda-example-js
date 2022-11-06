@@ -57,7 +57,7 @@ class ProductsService (private val dynamoDbClient: DynamoDB){
 
     companion object {
         private const val parallelScanTotalSegments = 5
-        private const val parallelScanPageSize = 400
+        private const val parallelScanPageSize = 420
 
     }
 }
