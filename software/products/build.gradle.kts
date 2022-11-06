@@ -40,3 +40,9 @@ tasks.register<Zip>("packageDistribution") {
     destinationDirectory.set(file("${project.rootDir}/build/dist"))
 }
 
+kotlin {
+    js {
+        nodejs {
+        }
+    }
+}
