@@ -13,5 +13,5 @@ fun handleRequest(
     ProductsController(ProductsService(dynamoDbClient)).execute(event == "unitTest", callback)
     console.log("Completed")
 }
-//private val dynamoDbClient = captureAWSClient(DynamoDB(mapOf("apiVersion" to "2012-08-10", "region" to "eu-west-1")))
-private val dynamoDbClient: DynamoDB = DynamoDB(mapOf("apiVersion" to "2012-08-10", "region" to "eu-west-1"))
+private val dynamoDbClient = captureAWSClient(DynamoDB(mapOf("apiVersion" to "2012-08-10", "region" to "eu-west-1")))
+//private val dynamoDbClient: DynamoDB = DynamoDB(mapOf("apiVersion" to "2012-08-10", "region" to "eu-west-1"))
