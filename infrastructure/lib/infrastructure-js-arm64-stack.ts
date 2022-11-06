@@ -26,7 +26,7 @@ export class InfrastructureJsArm64Stack extends Stack {
             environment: {
                 REGION: Stack.of(this).region,
             },
-            logRetention: logs.RetentionDays.ONE_DAY
+            logRetention: logs.RetentionDays.ONE_WEEK
         });
 
         productsTable.grantReadData(lambdaJSArm64);

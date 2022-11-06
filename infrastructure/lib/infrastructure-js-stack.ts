@@ -25,7 +25,7 @@ export class InfrastructureJsStack extends Stack {
             environment: {
                 REGION: Stack.of(this).region,
             },
-            logRetention: logs.RetentionDays.ONE_DAY
+            logRetention: logs.RetentionDays.ONE_WEEK
         });
 
         productsTable.grantReadData(lambdaJS);
