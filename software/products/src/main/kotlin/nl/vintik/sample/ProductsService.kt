@@ -1,5 +1,6 @@
 package nl.vintik.sample
 
+import externals.client_dynamodb.AttributeValue
 import externals.client_dynamodb.DynamoDB
 import externals.client_dynamodb.ScanCommandInput
 import kotlinx.coroutines.await
@@ -39,8 +40,8 @@ class ProductsService (private val dynamoDbClient: DynamoDB){
     ): Promise<Unit> {
         val result = dynamoDbClient.scan(input)
         //TODO: needs pagination with LastEvaluatedKey
-        return result.then {
-            it.Items?.forEach { productData ->
+        return result.then { scanOutput ->
+            scanOutput.Items?.forEach { productData ->
                 products.add(
                     Product(
                         productData["id"].S as String,
@@ -48,6 +49,20 @@ class ProductsService (private val dynamoDbClient: DynamoDB){
                         (productData["price"].N as String).toFloat()
                     )
                 )
+
+            }
+            scanOutput.LastEvaluatedKey?.let {
+               val newInput = object : ScanCommandInput {
+                // omitted
+                override var TableName: String?
+                    get() = TABLE_NAME
+                    set(value) {}
+            }
+                newInput.Segment = input.Segment
+                newInput.TotalSegments = input.TotalSegments
+                newInput.Limit = input.Limit
+                newInput.ExclusiveStartKey = it
+               scan(input,products)
             }
 
         }.catch {
@@ -57,7 +72,7 @@ class ProductsService (private val dynamoDbClient: DynamoDB){
 
     companion object {
         private const val parallelScanTotalSegments = 5
-        private const val parallelScanPageSize = 420
+        private const val parallelScanPageSize = 25
 
     }
 }
