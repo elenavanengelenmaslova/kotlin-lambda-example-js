@@ -1,6 +1,5 @@
 package nl.vintik.sample
 
-import externals.client_dynamodb.AttributeValue
 import externals.client_dynamodb.DynamoDB
 import externals.client_dynamodb.ScanCommandInput
 import kotlinx.coroutines.await
@@ -52,17 +51,19 @@ class ProductsService (private val dynamoDbClient: DynamoDB){
 
             }
             scanOutput.LastEvaluatedKey?.let {
-               val newInput = object : ScanCommandInput {
-                // omitted
-                override var TableName: String?
-                    get() = TABLE_NAME
-                    set(value) {}
-            }
-                newInput.Segment = input.Segment
-                newInput.TotalSegments = input.TotalSegments
-                newInput.Limit = input.Limit
-                newInput.ExclusiveStartKey = it
-               scan(input,products)
+                if(input.ExclusiveStartKey != it){
+                    val newInput = object : ScanCommandInput {
+                        // omitted
+                        override var TableName: String?
+                            get() = TABLE_NAME
+                            set(value) {}
+                    }
+                    newInput.Segment = input.Segment
+                    newInput.TotalSegments = input.TotalSegments
+                    newInput.Limit = input.Limit
+                    newInput.ExclusiveStartKey = it
+                    scan(input,products)
+                }
             }
 
         }.catch {
