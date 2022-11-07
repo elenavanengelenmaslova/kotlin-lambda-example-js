@@ -64,7 +64,7 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
                     newInput.TotalSegments = input.TotalSegments
                     newInput.Limit = input.Limit
                     newInput.ExclusiveStartKey = it
-                    scan(jobs, input, products)
+                    scan(jobs, newInput, products)
                 }
             }
 
