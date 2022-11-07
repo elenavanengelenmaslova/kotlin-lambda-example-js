@@ -2,15 +2,16 @@ package nl.vintik.sample
 
 import externals.client_dynamodb.DynamoDB
 import externals.client_dynamodb.ScanCommandInput
+import externals.client_dynamodb.ScanCommandOutput
 import kotlinx.coroutines.await
 import nl.vintik.sample.model.Product
 import nl.vintik.sample.model.Product.Companion.TABLE_NAME
 import kotlin.js.Promise
 
-class ProductsService (private val dynamoDbClient: DynamoDB){
+class ProductsService(private val dynamoDbClient: DynamoDB) {
     suspend fun findAllProducts(): List<Product> {
-        val products = mutableListOf<Product>()
-        val jobs = mutableListOf<Promise<Unit>>()
+        val products = mutableSetOf<Product>()
+        val jobs = mutableListOf<Promise<ScanCommandOutput>>()
 
         console.log("Parallel scans set to : $parallelScanTotalSegments with page size $parallelScanPageSize")
 
@@ -24,22 +25,23 @@ class ProductsService (private val dynamoDbClient: DynamoDB){
             input.Segment = segment
             input.TotalSegments = parallelScanTotalSegments
             input.Limit = parallelScanPageSize
-            jobs.add(scan(input, products))
+            scan(jobs, input, products)
 
         }
         Promise.all(jobs.toTypedArray()).await()
 
         console.log("number of Product: ${products.size}")
-        return products
+        return products.toList()
     }
 
     private fun scan(
+        jobs: MutableList<Promise<ScanCommandOutput>>,
         input: ScanCommandInput,
-        products: MutableList<Product>
-    ): Promise<Unit> {
+        products: MutableSet<Product>
+    ) {
         val result = dynamoDbClient.scan(input)
-        //TODO: needs pagination with LastEvaluatedKey
-        return result.then { scanOutput ->
+        jobs.add(result)
+        result.then { scanOutput ->
             scanOutput.Items?.forEach { productData ->
                 products.add(
                     Product(
@@ -51,7 +53,7 @@ class ProductsService (private val dynamoDbClient: DynamoDB){
 
             }
             scanOutput.LastEvaluatedKey?.let {
-                if(input.ExclusiveStartKey != it){
+                if (input.ExclusiveStartKey != it) {
                     val newInput = object : ScanCommandInput {
                         // omitted
                         override var TableName: String?
@@ -62,7 +64,7 @@ class ProductsService (private val dynamoDbClient: DynamoDB){
                     newInput.TotalSegments = input.TotalSegments
                     newInput.Limit = input.Limit
                     newInput.ExclusiveStartKey = it
-                    scan(input,products)
+                    scan(jobs, input, products)
                 }
             }
 
