@@ -9,7 +9,6 @@ import kotlinx.coroutines.await
 import kotlinx.coroutines.launch
 import nl.vintik.sample.model.Product
 import nl.vintik.sample.model.Product.Companion.TABLE_NAME
-import kotlin.js.Promise
 
 class ProductsService(private val dynamoDbClient: DynamoDB) {
     suspend fun findAllProducts(): List<Product> {
@@ -28,7 +27,7 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
     private suspend fun scan(
         input: ScanCommandInput, products: MutableList<Product>
     ) {
-        dynamoDbClient.scan(input).then { scanOutput ->
+        dynamoDbClient.scan(input).await().let { scanOutput ->
             scanOutput.Items?.map { productData ->
                 products.add(
                     Product(
@@ -48,9 +47,7 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
                     }
                 }
             }
-        }.catch {
-            console.log("Error: ${JSON.stringify(it)}")
-        }.await()
+        }
         console.log("scan products total: ${products.size} for input: ${JSON.stringify(input)}")
     }
 
