@@ -3,7 +3,6 @@ package nl.vintik.sample
 import externals.client_dynamodb.AttributeValue
 import externals.client_dynamodb.DynamoDB
 import externals.client_dynamodb.ScanCommandInput
-import externals.client_dynamodb.ScanCommandOutput
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.await
 import kotlinx.coroutines.launch
@@ -13,7 +12,7 @@ import kotlin.js.Promise
 
 class ProductsService(private val dynamoDbClient: DynamoDB) {
     suspend fun findAllProducts(): List<Product> {
-        val products = mutableSetOf<Product>()
+        val products = mutableListOf<Product>()
 
         console.log("Parallel scans set to : $parallelScanTotalSegments with page size $parallelScanPageSize")
 
@@ -26,10 +25,9 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
     }
 
     private fun scan(
-        input: ScanCommandInput, products: MutableSet<Product>
-    ): Promise<ScanCommandOutput> {
-        val result = dynamoDbClient.scan(input)
-        result.then { scanOutput ->
+        input: ScanCommandInput, products: MutableList<Product>
+    ): Promise<Unit> {
+        val result = dynamoDbClient.scan(input).then { scanOutput ->
             scanOutput.Items?.forEach { productData ->
                 products.add(
                     Product(
