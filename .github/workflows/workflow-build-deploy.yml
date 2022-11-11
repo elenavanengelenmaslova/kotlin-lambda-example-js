@@ -127,6 +127,5 @@ jobs:
       - name: DEPLOY synthesize & deploy
         run: |
           cd ${GITHUB_WORKSPACE}/infrastructure
-          npm install
-          npm run build
-          npx cdk deploy -vv --require-approval never ${{ matrix.config.stack-name }} --exclusively
+          npm install -g aws-cdk
+          cdk deploy -vv --require-approval never ${{ matrix.config.stack-name }} --exclusively
