@@ -18,17 +18,17 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
 
         Promise.all((0 until parallelScanTotalSegments).map { segment ->
             scan(createScanCommandInput(segment), products)
-        }.toTypedArray()).await()
+        }.flatten().toTypedArray()).await()
 
         console.log("number of Product: ${products.size}")
         return products.toList()
     }
 
     private fun scan(
-        input: ScanCommandInput, products: MutableList<Product>
-    ): Promise<Unit> {
+        input: ScanCommandInput, products: MutableList<Product>, jobs: List<Promise<Unit>> = mutableListOf()
+    ): List<Promise<Unit>> {
         val result = dynamoDbClient.scan(input).then { scanOutput ->
-            scanOutput.Items?.forEach { productData ->
+            scanOutput.Items?.map { productData ->
                 products.add(
                     Product(
                         productData["id"].S as String,
@@ -39,13 +39,13 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
             }
             scanOutput.LastEvaluatedKey?.let {
                 if (input.ExclusiveStartKey != it) {
-                    GlobalScope.launch { scan(createScanCommandInput(input.Segment, it), products).await() }
+                    scan(createScanCommandInput(input.Segment, it), products, jobs)
                 }
             }
         }.catch {
             console.log("Error: ${JSON.stringify(it)}")
         }
-        return result
+        return jobs
     }
 
     private fun createScanCommandInput(segment: Number?, exclusiveStartKey: AttributeValue? = null): ScanCommandInput {
