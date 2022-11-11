@@ -3,9 +3,7 @@ package nl.vintik.sample
 import externals.client_dynamodb.AttributeValue
 import externals.client_dynamodb.DynamoDB
 import externals.client_dynamodb.ScanCommandInput
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.await
-import kotlinx.coroutines.launch
 import nl.vintik.sample.model.Product
 import nl.vintik.sample.model.Product.Companion.TABLE_NAME
 import kotlin.js.Promise
@@ -16,9 +14,12 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
 
         console.log("Parallel scans set to : $parallelScanTotalSegments with page size $parallelScanPageSize")
 
-        Promise.all((0 until parallelScanTotalSegments).map { segment ->
+        val jobs = (0 until parallelScanTotalSegments).map { segment ->
             scan(createScanCommandInput(segment), products)
-        }.flatten().toTypedArray()).await()
+        }.flatten()
+        console.log("Total jobs: ${jobs.size}")
+
+        Promise.all(jobs.toTypedArray()).await()
 
         console.log("number of Product: ${products.size}")
         return products.toList()
@@ -45,6 +46,7 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
         }.catch {
             console.log("Error: ${JSON.stringify(it)}")
         })
+        console.log("no jobs: ${jobs.size} for input: $input")
         return jobs
     }
 
