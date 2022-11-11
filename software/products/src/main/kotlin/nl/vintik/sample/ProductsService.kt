@@ -25,9 +25,9 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
     }
 
     private fun scan(
-        input: ScanCommandInput, products: MutableList<Product>, jobs: List<Promise<Unit>> = mutableListOf()
+        input: ScanCommandInput, products: MutableList<Product>, jobs: MutableList<Promise<Unit>> = mutableListOf()
     ): List<Promise<Unit>> {
-        val result = dynamoDbClient.scan(input).then { scanOutput ->
+        jobs.add(dynamoDbClient.scan(input).then { scanOutput ->
             scanOutput.Items?.map { productData ->
                 products.add(
                     Product(
@@ -44,7 +44,7 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
             }
         }.catch {
             console.log("Error: ${JSON.stringify(it)}")
-        }
+        })
         return jobs
     }
 
