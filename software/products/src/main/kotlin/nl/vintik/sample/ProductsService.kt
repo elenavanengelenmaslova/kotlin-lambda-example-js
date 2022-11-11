@@ -2,15 +2,16 @@ package nl.vintik.sample
 
 import externals.client_dynamodb.DynamoDB
 import externals.client_dynamodb.ScanCommandInput
+import externals.client_dynamodb.ScanCommandOutput
 import kotlinx.coroutines.await
 import nl.vintik.sample.model.Product
 import nl.vintik.sample.model.Product.Companion.TABLE_NAME
 import kotlin.js.Promise
 
-class ProductsService {
+class ProductsService(private val dynamoDbClient: DynamoDB) {
     suspend fun findAllProducts(): List<Product> {
-        val products = mutableListOf<Product>()
-        val jobs = mutableListOf<Promise<Unit>>()
+        val products = mutableSetOf<Product>()
+        val jobs = mutableListOf<Promise<ScanCommandOutput>>()
 
         console.log("Parallel scans set to : $parallelScanTotalSegments with page size $parallelScanPageSize")
 
@@ -24,23 +25,24 @@ class ProductsService {
             input.Segment = segment
             input.TotalSegments = parallelScanTotalSegments
             input.Limit = parallelScanPageSize
-            jobs.add(scan(input, products))
+            scan(jobs, input, products)
 
         }
         Promise.all(jobs.toTypedArray()).await()
 
         console.log("number of Product: ${products.size}")
-        return products
+        return products.toList()
     }
 
     private fun scan(
+        jobs: MutableList<Promise<ScanCommandOutput>>,
         input: ScanCommandInput,
-        products: MutableList<Product>
-    ): Promise<Unit> {
+        products: MutableSet<Product>
+    ) {
         val result = dynamoDbClient.scan(input)
-        //TODO: needs pagination with LastEvaluatedKey
-        return result.then {
-            it.Items?.forEach { productData ->
+        jobs.add(result)
+        result.then { scanOutput ->
+            scanOutput.Items?.forEach { productData ->
                 products.add(
                     Product(
                         productData["id"].S as String,
@@ -48,6 +50,22 @@ class ProductsService {
                         (productData["price"].N as String).toFloat()
                     )
                 )
+
+            }
+            scanOutput.LastEvaluatedKey?.let {
+                if (input.ExclusiveStartKey != it) {
+                    val newInput = object : ScanCommandInput {
+                        // omitted
+                        override var TableName: String?
+                            get() = TABLE_NAME
+                            set(value) {}
+                    }
+                    newInput.Segment = input.Segment
+                    newInput.TotalSegments = input.TotalSegments
+                    newInput.Limit = input.Limit
+                    newInput.ExclusiveStartKey = it
+                    scan(jobs, newInput, products)
+                }
             }
 
         }.catch {
@@ -56,8 +74,6 @@ class ProductsService {
     }
 
     companion object {
-        private val dynamoDbClient: DynamoDB = DynamoDB(mapOf("apiVersion" to "2012-08-10", "region" to "eu-west-1"))
-
         private const val parallelScanTotalSegments = 5
         private const val parallelScanPageSize = 25
 
