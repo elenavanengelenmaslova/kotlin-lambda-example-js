@@ -3,7 +3,10 @@ package nl.vintik.sample
 import externals.client_dynamodb.AttributeValue
 import externals.client_dynamodb.DynamoDB
 import externals.client_dynamodb.ScanCommandInput
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.await
+import kotlinx.coroutines.launch
 import nl.vintik.sample.model.Product
 import nl.vintik.sample.model.Product.Companion.TABLE_NAME
 import kotlin.js.Promise
@@ -14,21 +17,18 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
 
         console.log("Parallel scans set to : $parallelScanTotalSegments with page size $parallelScanPageSize")
 
-        val jobs = (0 until parallelScanTotalSegments).map { segment ->
+        (0 until parallelScanTotalSegments).map { segment ->
             scan(createScanCommandInput(segment), products)
-        }.flatten()
-        console.log("Total jobs: ${jobs.size}")
+        }
 
-        Promise.all(jobs.toTypedArray()).await()
-
-        console.log("number of Product: ${products.size}")
+        console.log("total number of Product: ${products.size}")
         return products.toList()
     }
 
-    private fun scan(
-        input: ScanCommandInput, products: MutableList<Product>, jobs: MutableList<Promise<Unit>> = mutableListOf()
-    ): List<Promise<Unit>> {
-        jobs.add(dynamoDbClient.scan(input).then { scanOutput ->
+    private suspend fun scan(
+        input: ScanCommandInput, products: MutableList<Product>
+    ) {
+        dynamoDbClient.scan(input).then { scanOutput ->
             scanOutput.Items?.map { productData ->
                 products.add(
                     Product(
@@ -40,14 +40,18 @@ class ProductsService(private val dynamoDbClient: DynamoDB) {
             }
             scanOutput.LastEvaluatedKey?.let {
                 if (input.ExclusiveStartKey != it) {
-                    scan(createScanCommandInput(input.Segment, it), products, jobs)
+                    GlobalScope.launch(Dispatchers.Default) {
+                        scan(
+                            createScanCommandInput(input.Segment, it),
+                            products
+                        )
+                    }
                 }
             }
         }.catch {
             console.log("Error: ${JSON.stringify(it)}")
-        })
-        console.log("no jobs: ${jobs.size} for input: $input")
-        return jobs
+        }.await()
+        console.log("scan products total: ${products.size} for input: ${JSON.stringify(input)}")
     }
 
     private fun createScanCommandInput(segment: Number?, exclusiveStartKey: AttributeValue? = null): ScanCommandInput {
