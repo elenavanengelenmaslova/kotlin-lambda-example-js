@@ -3,15 +3,15 @@ buildscript {
         mavenCentral()
     }
 }
-plugins {
-    kotlin("js") version "1.7.20"
-}
 
 repositories {
     jcenter()
     mavenCentral()
 }
 
+plugins {
+    kotlin("js") version "1.7.21"
+}
 dependencies {
     testImplementation(kotlin("test"))
     implementation("org.jetbrains.kotlinx:kotlinx-nodejs:0.0.7")
@@ -20,15 +20,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation(npm("zoned-date-time", "1.1.0"))
 
-}
-
-kotlin {
-    js {
-        binaries.executable()
-        nodejs {
-        }
-        useCommonJs()
-    }
 }
 
 tasks.register<Zip>("packageDistribution") {
@@ -40,6 +31,14 @@ tasks.register<Zip>("packageDistribution") {
     destinationDirectory.set(file("${project.rootDir}/build/dist"))
 }
 
+kotlin {
+    js {
+        binaries.executable()
+        nodejs {
+        }
+        useCommonJs()
+    }
+}
 kotlin {
     js {
         nodejs {
