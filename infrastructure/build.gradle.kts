@@ -1,7 +1,7 @@
 
 plugins {
     application
-    kotlin("jvm") version "1.7.20"
+    kotlin("jvm") version "1.7.21"
 }
 
 repositories {
@@ -9,7 +9,7 @@ repositories {
 }
 dependencies {
     implementation("software.amazon.awscdk:aws-cdk-lib:2.49.0")
-    implementation("software.constructs:constructs:10.1.145")
+    implementation("software.constructs:constructs:10.1.159")
 }
 
 application {
