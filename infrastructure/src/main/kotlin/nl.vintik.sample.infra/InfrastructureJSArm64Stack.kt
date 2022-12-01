@@ -14,7 +14,7 @@ class InfrastructureJsARM64Stack(scope: Construct, id: String, props: StackProps
         val function = Function.Builder.create(this, functionId)
             .description("Kotlin Lambda JS Example")
             .handler("kotlin-lambda-example-js-products.handleRequest")
-            .runtime(Runtime.NODEJS_16_X)
+            .runtime(Runtime.NODEJS_18_X)
             .code(Code.fromAsset("../build/dist/function.zip"))
             .environment(
                 mapOf("REGION" to of(this).region)
