@@ -1,5 +1,5 @@
 # kotlin-lambda-example-js
-Kotlin Lambda example on JS contains two CDK stacks of Kotlin Lambda: Kotlin/JS on x86, Kotlin/JS on Arm64. There is also one CDK stack for Dynamo Table.
+Kotlin Lambda example on JS contains two CDK stacks of Kotlin Lambda: Kotlin/JS on x86, Kotlin/JS on Arm64. There is also one CDK stack for Dynamo Table. x86 and ARM64 examples were used in performance tests for "To ARM64 or not to ARM64" article: https://medium.com/aws-tip/this-week-in-kotlin-on-aws-lambda-to-arm64-or-not-to-arm64-e970f97baef3
 
 ## Build & Deployment from local machine
 ### Build kotlin app
